@@ -1,0 +1,10 @@
+[
+{
+    "modid": "betteroffhand",
+    "name": "Better Offhand",
+    "description": "A mod that enhances offhand functionality.",
+    "version": "${version}",
+    "mcversion": "${mcversion}",
+    "authorList": [ "panoskj" ]
+}
+]
