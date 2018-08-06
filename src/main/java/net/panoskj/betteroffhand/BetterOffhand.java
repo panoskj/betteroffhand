@@ -1,6 +1,10 @@
 package net.panoskj.betteroffhand;
 
+import java.util.HashMap;
+
 import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.world.World;
 import net.minecraft.util.EnumHand;
@@ -35,17 +39,47 @@ public class BetterOffhand {
 		if (player == null) return;
         
         if (event.getHand() == EnumHand.OFF_HAND) {
-            try {
-                Class helditemclass = player.getHeldItemMainhand().getItem().getClass();
-                Class declaringclass = helditemclass.getMethod("func_180614_a", EntityPlayer.class, World.class, BlockPos.class, EnumHand.class, EnumFacing.class, float.class, float.class, float.class).getDeclaringClass();
-                if (!declaringclass.equals(Item.class))
-                    event.setUseItem(Event.Result.DENY);
-            }
-            catch (Exception e) {
-                System.out.println(e);
-            }
+			
+			Item helditem = player.getHeldItemMainhand().getItem();
+			
+			Boolean canbeused = cache.get(helditem);
+			
+			if (canbeused != null)
+			{
+				if (canbeused) event.setUseItem(Event.Result.DENY);
+			}
+			else
+			{
+				try {
+					
+					Class helditemclass = player.getHeldItemMainhand().getItem().getClass();
+					
+					Class declaringclass_onItemUse = helditemclass.getMethod("func_180614_a",
+							EntityPlayer.class, World.class, BlockPos.class, EnumHand.class,
+							EnumFacing.class, float.class, float.class, float.class).getDeclaringClass();
+							
+					Class declaringclass_onItemUseFinish = helditemclass.getMethod("func_77654_b",
+							ItemStack.class, World.class, EntityLivingBase.class).getDeclaringClass();
+					
+					if (!declaringclass_onItemUse.equals(Item.class) ||
+						!declaringclass_onItemUseFinish.equals(Item.class))
+					{	
+						cache.put(helditem, true);
+						event.setUseItem(Event.Result.DENY);
+					}
+					else cache.put(helditem, false);
+				}
+				catch (Exception e) {
+					// We don't have to cause an exception for this item again.
+					cache.put(helditem, false);
+					System.out.println(e);
+				}
+			}
         }
         
     }
-    
+	
+	// Use this cache to minimize reflection's and (unlikely) exceptions' overhead. 
+	// Note: it is unknown whether the memory overhead is actually worth it.
+	private HashMap<Item, Boolean> cache = new HashMap<Item, Boolean>();
 }
